@@ -13,9 +13,18 @@
 class CombinedWave{
 public:
     
-    void setup(int bufferSize, int homeX, int homeY);
-    void update(float deltaTime);
+    void setup(int bufferSize);
+    void setPos(int homeX, int homeY, float _scale);
+    void reset();
+    void update(float deltaTime, float winSequenceTimer);
+    
+    void drawBG(float myPan);
     void draw(float myPan);
+    
+    void startWinSequence();
+    void endWinSequence();
+    
+    float getPhasedSample(int curPos, int offset);
     
     ofVec2f pos;
     ofVec2f homePos;
@@ -28,6 +37,14 @@ public:
     ofColor lineColor;
     
     float randVal;
+    
+    float displayScale;
+    float winScaleAdjust;
+    
+    bool doingWinSequence;
+    bool finishingWinSequence;
+    
+    float noiseRange, targetNoiseRange;
     
 };
 

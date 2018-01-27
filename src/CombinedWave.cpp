@@ -8,38 +8,95 @@
 #include "CombinedWave.hpp"
 
 
-void CombinedWave::setup(int bufferSize, int homeX, int homeY){
+void CombinedWave::setup(int bufferSize){
     audio.assign(bufferSize, 0.0);
+    
+    randVal = ofRandom(0,1000);
+    
+    noiseRange = 0;
+    targetNoiseRange  = 0;
+}
+
+void CombinedWave::setPos(int homeX, int homeY, float _scale){
+    
     homePos.set(homeX, homeY);
     
     waveDisplayHeight = 100;
-    
-    randVal = ofRandom(0,1000);
-}
-
-void CombinedWave::update(float deltaTime){
-    
-    pos = homePos;
+    displayScale = _scale;
     
 }
 
-void CombinedWave::draw(float myPan){
+void CombinedWave::reset(){
+    doingWinSequence = false;
+    finishingWinSequence = false;
+    winScaleAdjust = 1;
     
-    float myScale =  ofMap(myPan, 0, 1, 0.9, 1.1);
+}
+
+void CombinedWave::update(float deltaTime, float winSequenceTimer){
+    
+    if (!doingWinSequence && !finishingWinSequence){
+        pos = homePos;
+        targetNoiseRange = 10 * displayScale;
+    }
+    
+    float noiseSpeed = 0.1;
+    float noiseZeno = 0.1f;
+    noiseRange = (1.0f-noiseZeno)*noiseRange + noiseZeno*targetNoiseRange;
+    
+    if (doingWinSequence){
+        targetNoiseRange *= ofMap(winSequenceTimer, 0.0f, 2.0f, 1.0f, 0.0f, true);
+        
+        float shiftCenterPrc = ofMap(winSequenceTimer, 3.0f, 6.0f, 0.0f, 1.0f, true);
+        pos.x = (1.0-shiftCenterPrc)*homePos.x + shiftCenterPrc * ((float)ofGetWidth()*0.5);
+    }
+    
+    if (finishingWinSequence){
+        float zeno = 0.15;
+        winScaleAdjust = (1.0f-zeno)*winScaleAdjust + zeno*1;
+        pos.x = (1.0f-zeno)*pos.x + zeno*homePos.x;
+        targetNoiseRange = 0;
+    }
+    
+    
+    pos.x += -noiseRange + ofNoise(ofGetElapsedTimef() * noiseSpeed, 0, randVal) * noiseRange * 2;
+    pos.y = homePos.y -noiseRange + ofNoise(ofGetElapsedTimef() * noiseSpeed, 100, randVal) * noiseRange * 2;
+    
+}
+
+void CombinedWave::drawBG(float myPan){
+    
+    float myScale =  ofMap(myPan, 0, 1, 0.9, 1.1) * displayScale;
     myScale += sin( ofGetElapsedTimef() + ofNoise(ofGetElapsedTimef()*0.1, randVal)*0.3 ) * 0.03;
+    myScale *= winScaleAdjust;
     
     ofPushMatrix();
     ofTranslate(pos.x, pos.y);
     ofScale(myScale, myScale);
     
     //draw the background
-    ofColor thisCol = fillColor;
-    thisCol.a =  ofMap(myPan, 0, 0.5, 150, 255, true);
-    ofSetColor(thisCol );
     ofFill();
     ofSetCircleResolution(40);
+    ofSetColor(lineColor);
     ofDrawEllipse(0, 0, audio.size(), waveDisplayHeight*2.5);
     
+    ofColor thisCol = fillColor;
+    thisCol.a =  ofMap(myPan, 0, 0.5, 150, 255, true);
+    ofSetColor(thisCol);
+    ofDrawEllipse(0, 0, audio.size(), waveDisplayHeight*2.5);
+    
+    ofPopMatrix();
+}
+
+void CombinedWave::draw(float myPan){
+    
+    float myScale =  ofMap(myPan, 0, 1, 0.9, 1.1) * displayScale;
+    myScale += sin( ofGetElapsedTimef() + ofNoise(ofGetElapsedTimef()*0.1, randVal)*0.3 ) * 0.03;
+    myScale *= winScaleAdjust;
+    
+    ofPushMatrix();
+    ofTranslate(pos.x, pos.y);
+    ofScale(myScale, myScale);
     
     //draw the wave
     ofSetLineWidth(3);
@@ -47,9 +104,30 @@ void CombinedWave::draw(float myPan){
     ofNoFill();
     ofBeginShape();
     for (int i=0; i<audio.size(); i++){
-        ofVertex(i - (int)(audio.size()/2), audio[i] * waveDisplayHeight);
+        float thisX = i - (int)(audio.size()/2);
+        float thisY = audio[i] * waveDisplayHeight;
+        ofVertex(thisX, thisY);
     }
     ofEndShape();
     
     ofPopMatrix();
 }
+
+void CombinedWave::startWinSequence(){
+    doingWinSequence = true;
+}
+void CombinedWave::endWinSequence(){
+    doingWinSequence = false;
+    finishingWinSequence = true;
+}
+
+float CombinedWave::getPhasedSample(int curPos, int offset){
+    int idNum = curPos-offset;
+    if (idNum < 0){
+        idNum += audio.size();
+    }
+    
+    return audio[idNum];
+    
+}
+

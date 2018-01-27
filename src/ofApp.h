@@ -8,6 +8,7 @@ class ofApp : public ofBaseApp{
 
 public:
     void setup();
+    void setScreenSize();
     void restart();
     void update();
     void draw();
@@ -24,6 +25,8 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     
+    void startWinSequence();
+    void endWinSequence();
     
     void audioOut(float * input, int bufferSize, int nChannels);
     
@@ -45,8 +48,26 @@ public:
     CombinedWave displayWaves[2];
     
     float pan;
+    float targetPan;
     
+    //game states
+    int gameState;
+#define STATE_GAME 1
+#define STATE_WIN 2
+#define STATE_WIN_END 3
+    
+    //winning
+    float winTime;
+    float winTimer;
+    
+    float winEffectTimer;
+    
+    float winPhaseVolPrc;
+    
+    //colors
     ofColor fillColor;
     ofColor lineColor;
+    ofColor extraColor;
+    
 		
 };

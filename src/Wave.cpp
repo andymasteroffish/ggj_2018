@@ -21,15 +21,16 @@ void Wave::setup(float _frequence, int _sampleRate){
     
     phase = 0;
     
-    box.height = 100;
-    box.width = audio.size()*0.33;
-    
-    //isSelected = false;
+    displayHeight = 100;
+    displayWidth = audio.size()*0.33;
+    displayScale = 0.75;
 }
 
 void Wave::setPos(int x, int y){
-    box.x = x;
-    box.y = y;
+    homePos.x = x;
+    homePos.y = y;
+    pos.x = x;
+    pos.y = y;
 }
 
 void Wave::setFrequency(float newVal){
@@ -44,7 +45,7 @@ void Wave::advanceAudio(){
     }
     
     phase += phaseAdder;
-    float sample = sin(phase) * vol;
+    float sample = sin(phase) * vol * winEffectVol;
     
     //cout<<"s"<<sin(phase)<<endl;
     
@@ -57,24 +58,37 @@ void Wave::advanceAudio(){
     curSample = sample;
 }
 
+void Wave::update(bool gameEnd){
+    float zeno = 0.01;
+    
+    float bottomPos = ofGetHeight();
+    
+    if (gameEnd){
+        pos.y = (1.0f-zeno)*pos.y + zeno*bottomPos;
+    }else{
+        pos.y = (1.0f-zeno)*pos.y + zeno*homePos.y;
+    }
+}
 
 void Wave::draw(ofColor baseCol, bool drawActive){
     
     ofSetLineWidth(3);
     
     ofPushMatrix();
-    ofTranslate(box.x,box.y);
+    ofTranslate(pos.x, pos.y);
+    
+    ofScale(displayScale, displayScale);
     
     ofColor thisCol = baseCol;
     thisCol.a = drawActive ? 255 : 100;
     ofSetColor(thisCol);
     ofNoFill();
     
-    ofDrawRectangle(0,0, box.width, box.height);
+    ofDrawRectangle(-displayWidth/2,-displayHeight/2, displayWidth, displayHeight);
     
     ofBeginShape();
-    for (int i=0; i<box.width; i++){
-        ofVertex(i, box.height*0.5 + audio[i]*box.height*0.5);
+    for (int i=0; i<displayWidth; i++){
+        ofVertex(i - displayWidth/2, audio[i]*displayHeight*0.5);
     }
     ofEndShape();
     
@@ -83,5 +97,5 @@ void Wave::draw(ofColor baseCol, bool drawActive){
 
 
 bool Wave::mousePressed(int x, int y){
-    return box.inside(x, y);
+    return false;//box.inside(x, y);
 }

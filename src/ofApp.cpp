@@ -2,13 +2,17 @@
 
 //some colors: http://www.colourlovers.com/palette/1767756/Crescendoe
 
+float masterVol = 0.75;
+
 //--------------------------------------------------------------
 void ofApp::setup(){
     
     fillColor.set(167,29,27);
     lineColor.set(20,20,28);
+    extraColor.set(247,232,201, 150);
     
     ofEnableSmoothing();
+    ofEnableAlphaBlending();
     
     ofBackground(lineColor);
     
@@ -17,36 +21,68 @@ void ofApp::setup(){
     
     bufferSize = 512;
     sampleRate = 44100;
-    
     soundStream.setup(this, 2, 0, sampleRate, bufferSize, 4);
     
-    //playerAudio.assign(bufferSize, 0.0);
-    //mysteryAudio.assign(bufferSize, 0.0);
-    
-    numWaves = 8;
+    numWaves = 7;
     playerActiveWaves.assign(numWaves, false);
     mysteryActiveWaves.assign(numWaves, false);
     
+    //setup the wave buttons
     for (int i=0; i<numWaves; i++){
-        int x = 10 + (i%4) * 260;
-        int y = 100 + (i/4) * 150;
-        
         Wave wave;
         wave.setup(440, sampleRate);
-        wave.setPos(x,y);
         waves.push_back(wave);
     }
     
-    displayWaves[PLAYER_ID].setup(bufferSize, bufferSize/2 + 10, ofGetHeight()-200);
-    displayWaves[MYSTERY_ID].setup(bufferSize, ofGetWidth()-bufferSize/2-10, ofGetHeight()-200);
+    //and the combined waves
     for (int i=0; i<2; i++){
+        displayWaves[i].setup(bufferSize);
+        
         displayWaves[i].fillColor = fillColor;
         displayWaves[i].lineColor = lineColor;
     }
     
+    winTime = 0.5;
+    winTimer = 0;
+    
     restart();
     
     nextAudioPos = 0;
+    
+    setScreenSize();
+    
+}
+
+//--------------------------------------------------------------
+void ofApp::setScreenSize(){
+    
+    float screenScale = (float)ofGetWidth() / 1200.0f;
+    
+    
+    //combined waves
+    for (int i=0; i<2; i++){
+        float thisY = ofGetHeight() * 0.35;
+        float thisX = ofGetWidth()/2 + ofGetWidth()*0.25 * (i==0 ? -1 : 1);
+        displayWaves[i].setPos(thisX, thisY, screenScale);
+    }
+    
+    //wave buttons
+    int centerPos = (numWaves-1)/2;
+    for (int i=0; i<numWaves; i++){
+        int order = i- centerPos;
+        
+        float thisScale = ((float)ofGetWidth()-200) / (waves[i].displayWidth*(float)numWaves);
+        
+        float xPadding = 100 * thisScale ;
+        int x = ofMap(i, 0, numWaves-1, xPadding, ofGetWidth()-xPadding);
+        float topY = ofGetHeight() * 0.7;
+        float botY = (ofGetHeight() - (waves[i].displayHeight * thisScale)) * 0.96;
+        int y = ofMap( abs(order) , 0, centerPos, topY, botY);
+        
+        waves[i].setPos(x,y);
+        waves[i].displayScale = thisScale;
+    }
+    
     
 }
 
@@ -121,20 +157,101 @@ void ofApp::restart(){
     for (int i=0; i<mysteryIDs.size(); i++){
         cout<<"love to add "<<mysteryIDs[i]<<endl;
     }
+    
+    cout<<"mys ";
+    for (int i=0; i<numWaves; i++){
+        cout<<mysteryActiveWaves[i];
+    }
+    cout<<endl;
+    
+    for (int i=0; i<2; i++){
+        displayWaves[i].reset();
+    }
+    
+    gameState = STATE_GAME;
+    
+    winEffectTimer = 0;
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
     //cout<<sourceWaves[0].frequency<<endl;
+   
+    if (gameState == STATE_GAME){
+        //winner?
+        bool winner = true;
+        for (int i=0; i<numWaves; i++){
+            if (mysteryActiveWaves[i] != playerActiveWaves[i]){
+                winner = false;
+            }
+        }
+        if (winner){
+            winTimer += ofGetLastFrameTime();
+            cout<<"win timer "<<winTimer<<endl;
+            if (winTimer >= winTime){
+                startWinSequence();
+            }
+        }else{
+            winTimer -= ofGetLastFrameTime();
+            winTimer = MAX(0, winTimer);
+        }
+    }
     
+    if (gameState == STATE_WIN){
+        winEffectTimer += ofGetLastFrameTime();
+        
+        float panZeno = 0.05;
+        targetPan = (1.0f-panZeno)*pan + panZeno * 0.5;
+        
+        float phaseStartTime = 2.5;
+        if (winEffectTimer > phaseStartTime){
+            float phaseTimer = winEffectTimer-phaseStartTime;
+            winPhaseVolPrc = 0.5 + cos( powf(phaseTimer, 2)) * 0.5;
+            for (int i=0; i<2; i++){
+                displayWaves[i].winScaleAdjust = 1.0f + winPhaseVolPrc * ofMap(phaseTimer, 0,4, 0,0.5f, true);
+            }
+            cout<<"phase prc "<<winPhaseVolPrc<<endl;
+        }
+        
+        if (winEffectTimer > 8){
+            endWinSequence();
+        }
+    }
+    
+    float winVolZeno = 0.1;
+    if (gameState == STATE_WIN_END){
+        for (int i=0; i<numWaves; i++){
+            waves[i].winEffectVol = (1.0f-winVolZeno) * waves[i].winEffectVol;
+        }
+        //restart the game once we hit 0
+        if (waves[0].winEffectVol < 0.001){
+            restart();
+        }
+    }else{
+        for (int i=0; i<numWaves; i++){
+            waves[i].winEffectVol = (1.0f-winVolZeno) * waves[i].winEffectVol + 1.0f*winVolZeno;
+        }
+    }
+    
+    //move the pan
+    float panLerp = 0.1f;
+    pan = (1.0f-panLerp)*pan + panLerp*targetPan;
+    
+    //update the display waves
     for (int i=0; i<2; i++){
-        displayWaves[i].update(ofGetLastFrameTime());
+        displayWaves[i].update(ofGetLastFrameTime(), winEffectTimer);
+    }
+    
+    //and the regular waves
+    for (int i=0; i<numWaves; i++){
+        waves[i].update(gameState == STATE_WIN || gameState == STATE_WIN_END);
     }
 }
 
 //--------------------------------------------------------------
 void ofApp::audioOut(float * output, int bufferSize, int nChannels){
     
+   
     //cout<<"boop "<<ofGetFrameNum()<<endl;
    
     for (int k = 0; k < bufferSize; k++){
@@ -178,9 +295,16 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels){
             }
         }
         displayWaves[MYSTERY_ID].audio[k] = mysterySample;
-        //mysteryAudio[nextAudioPos] = mysterySample;
-
         float sample = pan*mysterySample + (1.0f-pan) * playerSample;
+        
+        //if the game is over, combine the real sample with a phased out one
+        if (gameState == STATE_WIN){
+            float phaseSample = displayWaves[MYSTERY_ID].getPhasedSample(k, bufferSize/2);
+            sample = (1-winPhaseVolPrc)*sample + winPhaseVolPrc*phaseSample;
+            sample *= ofMap(winEffectTimer, 0.0f, 8.0f, 1.0f, 1.5f);
+        }
+        
+        sample *= masterVol;
         
         //float sample = ofRandom(0.25);
         output[k*nChannels] = sample ;
@@ -190,6 +314,37 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+    //globalScale = ofMap(ofGetMouseX(), 0, ofGetWidth(), 0.1, 2);
+//    ofPushMatrix();
+//    ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
+//    ofScale(globalScale, globalScale);
+//    ofTranslate(-ofGetWidth()/2, -ofGetHeight()/2);
+    
+    //wave connections
+    for (int i=0; i<waves.size(); i++){
+        if (playerActiveWaves[i]){
+            ofColor thisCol = extraColor;
+            thisCol.a = waves[i].winEffectVol * 255;
+            ofSetColor(thisCol);
+            
+            ofSetLineWidth( 2 );
+            float startX = waves[i].pos.x + sin(ofGetElapsedTimef() * waves[i].frequency * 0.01 ) * 15;
+            float startY = waves[i].pos.y-waves[i].displayHeight*0.5*waves[i].displayScale;
+            ofDrawLine(startX, startY, displayWaves[PLAYER_ID].pos.x, displayWaves[PLAYER_ID].pos.y);
+        }
+        
+        
+        //wave connections on win
+        if (gameState == STATE_WIN && mysteryActiveWaves[i]){
+            ofColor col = extraColor;
+            col.a = ofMap(winEffectTimer, 0, 3, 0, 255, true);
+            ofSetColor(col);
+            ofSetLineWidth( 2 );
+            float startX = waves[i].pos.x + sin(ofGetElapsedTimef() * waves[i].frequency * 0.01 ) * 15;
+            float startY = waves[i].pos.y-waves[i].displayHeight*0.5*waves[i].displayScale;
+            ofDrawLine(startX, startY, displayWaves[MYSTERY_ID].pos.x, displayWaves[MYSTERY_ID].pos.y);
+        }
+    }
     
     //wave buttons
     for (int i=0; i<waves.size(); i++){
@@ -199,49 +354,20 @@ void ofApp::draw(){
     //the combined waves
     for (int i=0; i<2; i++){
         float thisPan = i==0 ? (1.0f-pan) : pan;
+        displayWaves[i].drawBG(thisPan);
+    }
+    for (int i=0; i<2; i++){
+        float thisPan = i==0 ? (1.0f-pan) : pan;
         displayWaves[i].draw(thisPan);
     }
     
-//    ofPushMatrix();
-//    ofTranslate(0, ofGetHeight()-100);
-//
-//    ofSetColor(0);
-//    ofNoFill();
-//
-//    ofBeginShape();
-//    for (int i=0; i<playerAudio.size(); i++){
-//        ofVertex(i, playerAudio[i]*100);
-//    }
-//    ofEndShape();
-//
-//    ofBeginShape();
-//    for (int i=0; i<mysteryAudio.size(); i++){
-//        ofVertex(i+bufferSize+100, mysteryAudio[i]*100);
-//    }
-//    ofEndShape();
-//
-//
-//    ofPopMatrix();
-
-    //winner?
-    bool winner = true;
-    for (int i=0; i<numWaves; i++){
-        if (mysteryActiveWaves[i] != playerActiveWaves[i]){
-            winner = false;
-        }
-    }
-    if (winner){
-        ofDrawBitmapString("YOU WIN. PRESS R", ofGetWidth()/2, ofGetHeight()/2);
-    }
     
+    //ofPopMatrix();
     
     
     //debug shit
-    ofDrawBitmapString("fps: "+ofToString(ofGetFrameRate()), 5, 20);
-    //string playingText = playMysteryWave ? "mystery" : "yours";
-    //ofDrawBitmapString("playing "+playingText, 5, 40);
-    //ofDrawBitmapString("combine: "+ofToString(combineType), 5, 60);
-    
+    ofSetColor(fillColor);
+    //ofDrawBitmapString("fps: "+ofToString(ofGetFrameRate()), 5, 20);
 }
 
 //--------------------------------------------------------------
@@ -266,26 +392,32 @@ void ofApp::keyPressed(int key){
     }
     
     //numbers to debug turn on or off sounds
-    for (int i=0; i<numWaves; i++){
-        if (key == (int)('1')+i){
-            playerActiveWaves[i] = true;
+    if (gameState == STATE_GAME){
+        for (int i=0; i<numWaves; i++){
+            if (key == (int)('1')+i){
+                playerActiveWaves[i] = true;
+            }
         }
     }
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-    //numbers to debug turn on or off sounds
-    for (int i=0; i<numWaves; i++){
-        if (key == (int)('1')+i){
-            playerActiveWaves[i] = false;
+    if (gameState == STATE_GAME){
+        //numbers to debug turn on or off sounds
+        for (int i=0; i<numWaves; i++){
+            if (key == (int)('1')+i){
+                playerActiveWaves[i] = false;
+            }
         }
     }
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y ){
-    pan = ofMap(ofGetMouseX(), 0, ofGetWidth(), 0, 1, true);
+    if (gameState == STATE_GAME){
+        targetPan = ofMap(ofGetMouseX(), 0, ofGetWidth(), 0, 1, true);
+    }
 }
 
 //--------------------------------------------------------------
@@ -295,11 +427,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-    for (int i=0; i<waves.size(); i++){
-        if (waves[i].mousePressed(x, y)){
-            playerActiveWaves[i] = !playerActiveWaves[i];
-        }
-    }
+   
 }
 
 //--------------------------------------------------------------
@@ -319,7 +447,7 @@ void ofApp::mouseExited(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-
+    setScreenSize();
 }
 
 //--------------------------------------------------------------
@@ -330,6 +458,25 @@ void ofApp::gotMessage(ofMessage msg){
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
+}
+
+//--------------------------------------------------------------
+void ofApp::startWinSequence(){
+    cout<<"START WIN"<<endl;
+    gameState = STATE_WIN;
+    winEffectTimer = 0;
+    
+    for (int i=0; i<2; i++){
+        displayWaves[i].startWinSequence();
+    }
+}
+
+//--------------------------------------------------------------
+void ofApp::endWinSequence(){
+    gameState = STATE_WIN_END;
+    for (int i=0; i<2; i++){
+        displayWaves[i].endWinSequence();
+    }
 }
 
 //--------------------------------------------------------------

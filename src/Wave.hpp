@@ -18,6 +18,7 @@ public:
     void setFrequency(float newVal);
     void advanceAudio();
     
+    void update(bool gameEnd);
     void draw(ofColor baseCol, bool drawActive);
     
     bool mousePressed(int x, int y);
@@ -34,9 +35,16 @@ public:
     vector <float> audio;
     int nextAudioPos;
     
-    ofRectangle box;
+    //ofRectangle box;
+    ofVec2f pos;
+    ofVec2f homePos;
     
+    float displayWidth;
+    float displayHeight;
+    float displayScale;
     //bool isSelected;
+    
+    float winEffectVol;
     
 };
 
