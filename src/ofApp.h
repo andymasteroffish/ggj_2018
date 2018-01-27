@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "Wave.hpp"
+#include "CombinedWave.hpp"
 
 class ofApp : public ofBaseApp{
 
@@ -26,25 +27,26 @@ public:
     
     void audioOut(float * input, int bufferSize, int nChannels);
     
+    float getFreq(int halfStepsFrom440);
+    
     int bufferSize;
     int sampleRate;
     ofSoundStream soundStream;
     
-    vector <float> playerAudio, mysteryAudio;
+    //vector <float> playerAudio, mysteryAudio;
     int nextAudioPos;
    
-    //vector<Wave> playerWaves;
-    int combineType;
-    
     int numWaves;
     vector<Wave> waves;
     vector<bool> playerActiveWaves, mysteryActiveWaves;
     
-    //vector<Wave> mysteryWaves;
-    //int mysteryCombineType;
-    
-    bool playMysteryWave;
+#define PLAYER_ID 0
+#define MYSTERY_ID 1
+    CombinedWave displayWaves[2];
     
     float pan;
+    
+    ofColor fillColor;
+    ofColor lineColor;
 		
 };

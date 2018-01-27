@@ -22,7 +22,7 @@ void Wave::setup(float _frequence, int _sampleRate){
     phase = 0;
     
     box.height = 100;
-    box.width = audio.size()/2;
+    box.width = audio.size()*0.33;
     
     //isSelected = false;
 }
@@ -35,6 +35,7 @@ void Wave::setPos(int x, int y){
 void Wave::setFrequency(float newVal){
     frequency = newVal;
     phaseAdder = (frequency / (float) sampleRate) * TWO_PI;
+    phase = 0;
 }
 
 void Wave::advanceAudio(){
@@ -57,11 +58,16 @@ void Wave::advanceAudio(){
 }
 
 
-void Wave::draw(bool drawActive){
+void Wave::draw(ofColor baseCol, bool drawActive){
+    
+    ofSetLineWidth(3);
+    
     ofPushMatrix();
     ofTranslate(box.x,box.y);
     
-    ofSetColor(drawActive ? 0 : 150);
+    ofColor thisCol = baseCol;
+    thisCol.a = drawActive ? 255 : 100;
+    ofSetColor(thisCol);
     ofNoFill();
     
     ofDrawRectangle(0,0, box.width, box.height);

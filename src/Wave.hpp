@@ -18,7 +18,7 @@ public:
     void setFrequency(float newVal);
     void advanceAudio();
     
-    void draw(bool drawActive);
+    void draw(ofColor baseCol, bool drawActive);
     
     bool mousePressed(int x, int y);
     

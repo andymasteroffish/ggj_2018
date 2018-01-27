@@ -1,7 +1,16 @@
 #include "ofApp.h"
 
+//some colors: http://www.colourlovers.com/palette/1767756/Crescendoe
+
 //--------------------------------------------------------------
 void ofApp::setup(){
+    
+    fillColor.set(167,29,27);
+    lineColor.set(20,20,28);
+    
+    ofEnableSmoothing();
+    
+    ofBackground(lineColor);
     
     ofSetFrameRate(60);
     ofSetVerticalSync(true);
@@ -11,8 +20,8 @@ void ofApp::setup(){
     
     soundStream.setup(this, 2, 0, sampleRate, bufferSize, 4);
     
-    playerAudio.assign(bufferSize, 0.0);
-    mysteryAudio.assign(bufferSize, 0.0);
+    //playerAudio.assign(bufferSize, 0.0);
+    //mysteryAudio.assign(bufferSize, 0.0);
     
     numWaves = 8;
     playerActiveWaves.assign(numWaves, false);
@@ -28,52 +37,99 @@ void ofApp::setup(){
         waves.push_back(wave);
     }
     
+    displayWaves[PLAYER_ID].setup(bufferSize, bufferSize/2 + 10, ofGetHeight()-200);
+    displayWaves[MYSTERY_ID].setup(bufferSize, ofGetWidth()-bufferSize/2-10, ofGetHeight()-200);
+    for (int i=0; i<2; i++){
+        displayWaves[i].fillColor = fillColor;
+        displayWaves[i].lineColor = lineColor;
+    }
+    
     restart();
-    
-    
-    playMysteryWave = true;
     
     nextAudioPos = 0;
     
-    combineType = 0;
 }
 
 //--------------------------------------------------------------
 void ofApp::restart(){
-    for (int i=0; i<numWaves; i++){
-        mysteryActiveWaves[i] = false;
-        waves[i].vol = ofRandom(0.5,1.25);
-        waves[i].setFrequency(ofRandom(100,1000));
-    }
-    
-    //testing
-    //C, D, Eb, F, Gb, Ab, A and B
-    waves[0].setFrequency(261.6);   //C
-    waves[1].setFrequency(293.7);   //D
-    waves[2].setFrequency(311.1);   //Eb
-    waves[3].setFrequency(349.2);   //F
-    waves[4].setFrequency(369.994);   //Gb
-    waves[5].setFrequency(415.30);   //Ab
-    waves[6].setFrequency(440);   //A
-    waves[7].setFrequency(493.9);   //B
     
     int numToAdd = 3;
+    vector<int> mysteryIDs;
+    
+    int lowStepsDist = -25;
+    int highStepsDist = 15;
+    
+    //reset all waves
+    for (int i=0; i<numWaves; i++){
+        //start by turning all off
+        mysteryActiveWaves[i] = false;
+        playerActiveWaves[i] = false;
+        
+        //give a default val to replace
+        waves[i].setFrequency(-1);
+        
+        //slightly random vol
+        waves[i].vol = ofRandom(0.5,1.25);
+        
+    }
+    
+    //select numToAdd to turn on
     for (int i=0; i<numToAdd; i++){
         bool isGood = false;
         while(!isGood){
             int rand = ofRandom( mysteryActiveWaves.size() );
             if (mysteryActiveWaves[rand] == false){
                 mysteryActiveWaves[rand] = true;
+                mysteryIDs.push_back(rand);
                 isGood = true;
             }
-                
         }
+    }
+    
+    //set them up as a chord
+    int cordStart = ofRandom(-25, 10);
+    //THIS REQUIRES 3 TO BE ON RIGHT NOW
+    waves[ mysteryIDs[0] ].setFrequency( getFreq(cordStart-12) );
+    waves[ mysteryIDs[1] ].setFrequency( getFreq(cordStart+12+3) );
+    waves[ mysteryIDs[2] ].setFrequency( getFreq(cordStart+7) );
+//    waves[ mysteryIDs[0] ].setFrequency( getFreq(cordStart) );
+//    waves[ mysteryIDs[1] ].setFrequency( getFreq(cordStart+4-12) );
+//    waves[ mysteryIDs[2] ].setFrequency( getFreq(cordStart+7) );
+    
+    //generate random frequenceies for the remaining waves
+    for (int i=0; i<numWaves; i++){
+        if (waves[i].frequency < 0){
+            cout<<"get rand for "<<i<<endl;
+            //set a frequency that definitely has not been used
+            bool newSound = false;
+            while (newSound == false){
+                int halfSteps = ofRandom(lowStepsDist, highStepsDist);
+                float newFreq = getFreq( halfSteps);
+                newSound = true;
+                for (int k=0; k<i-1; k++){
+                    if ( (int)newFreq == (int)waves[k].frequency ){
+                        newSound = false;
+                    }
+                }
+                waves[i].setFrequency( newFreq );
+            }
+        }
+    }
+    
+    
+    
+    for (int i=0; i<mysteryIDs.size(); i++){
+        cout<<"love to add "<<mysteryIDs[i]<<endl;
     }
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
     //cout<<sourceWaves[0].frequency<<endl;
+    
+    for (int i=0; i<2; i++){
+        displayWaves[i].update(ofGetLastFrameTime());
+    }
 }
 
 //--------------------------------------------------------------
@@ -83,7 +139,7 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels){
    
     for (int k = 0; k < bufferSize; k++){
         nextAudioPos++;
-        if (nextAudioPos >= playerAudio.size()){
+        if (nextAudioPos >= displayWaves[0].audio.size()){
             nextAudioPos = 0;
         }
         
@@ -100,16 +156,12 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels){
                     playerSample = waves[i].curSample;
                     playerAddedFirst = true;
                 }else{
-                    if (combineType == 0){
-                        playerSample *= waves[i].curSample;
-                    }
-                    if (combineType == 1){
-                        playerSample += waves[i].curSample;
-                    }
+                    playerSample *= waves[i].curSample;
                 }
             }
         }
-        playerAudio[nextAudioPos] = playerSample;
+        displayWaves[PLAYER_ID].audio[k] = playerSample;
+        //playerAudio[nextAudioPos] = playerSample;
         
         
         //mystery
@@ -121,16 +173,12 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels){
                     mysterySample = waves[i].curSample;
                     mystAddedFirst = true;
                 }else{
-                    if (combineType == 0){
-                        mysterySample *= waves[i].curSample;
-                    }
-                    if (combineType == 1){
-                        mysterySample += waves[i].curSample;
-                    }
+                    mysterySample *= waves[i].curSample;
                 }
             }
         }
-        mysteryAudio[nextAudioPos] = mysterySample;
+        displayWaves[MYSTERY_ID].audio[k] = mysterySample;
+        //mysteryAudio[nextAudioPos] = mysterySample;
 
         float sample = pan*mysterySample + (1.0f-pan) * playerSample;
         
@@ -143,30 +191,37 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels){
 //--------------------------------------------------------------
 void ofApp::draw(){
     
+    //wave buttons
     for (int i=0; i<waves.size(); i++){
-        waves[i].draw(playerActiveWaves[i]);
+        waves[i].draw(fillColor, playerActiveWaves[i]);
     }
     
-    ofPushMatrix();
-    ofTranslate(0, ofGetHeight()-100);
-    
-    ofSetColor(0);
-    ofNoFill();
-    
-    ofBeginShape();
-    for (int i=0; i<playerAudio.size(); i++){
-        ofVertex(i, playerAudio[i]*100);
+    //the combined waves
+    for (int i=0; i<2; i++){
+        float thisPan = i==0 ? (1.0f-pan) : pan;
+        displayWaves[i].draw(thisPan);
     }
-    ofEndShape();
     
-    ofBeginShape();
-    for (int i=0; i<mysteryAudio.size(); i++){
-        ofVertex(i+bufferSize+100, mysteryAudio[i]*100);
-    }
-    ofEndShape();
-    
-    
-    ofPopMatrix();
+//    ofPushMatrix();
+//    ofTranslate(0, ofGetHeight()-100);
+//
+//    ofSetColor(0);
+//    ofNoFill();
+//
+//    ofBeginShape();
+//    for (int i=0; i<playerAudio.size(); i++){
+//        ofVertex(i, playerAudio[i]*100);
+//    }
+//    ofEndShape();
+//
+//    ofBeginShape();
+//    for (int i=0; i<mysteryAudio.size(); i++){
+//        ofVertex(i+bufferSize+100, mysteryAudio[i]*100);
+//    }
+//    ofEndShape();
+//
+//
+//    ofPopMatrix();
 
     //winner?
     bool winner = true;
@@ -191,19 +246,9 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-    if (key == 'c'){
-        combineType++;
-        if (combineType == 2){
-            combineType = 0;
-        }
-    }
     
     if (key == 'r'){
         restart();
-    }
-    
-    if (key == 'p'){
-        playMysteryWave = !playMysteryWave;
     }
     
     if (key == 'a'){
@@ -219,16 +264,28 @@ void ofApp::keyPressed(int key){
         }
         cout<<endl;
     }
+    
+    //numbers to debug turn on or off sounds
+    for (int i=0; i<numWaves; i++){
+        if (key == (int)('1')+i){
+            playerActiveWaves[i] = true;
+        }
+    }
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
+    //numbers to debug turn on or off sounds
+    for (int i=0; i<numWaves; i++){
+        if (key == (int)('1')+i){
+            playerActiveWaves[i] = false;
+        }
+    }
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y ){
-    pan = ofMap(ofGetMouseX(), 0, ofGetWidth(), 0, 1);
+    pan = ofMap(ofGetMouseX(), 0, ofGetWidth(), 0, 1, true);
 }
 
 //--------------------------------------------------------------
@@ -273,4 +330,10 @@ void ofApp::gotMessage(ofMessage msg){
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
+}
+
+//--------------------------------------------------------------
+//formula from https://pages.mtu.edu/~suits/NoteFreqCalcs.html
+float ofApp::getFreq(int halfStepsFrom440){
+    return 440 * powf(1.059463094359, (float)halfStepsFrom440);
 }
