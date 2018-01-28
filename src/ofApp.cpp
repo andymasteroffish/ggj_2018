@@ -2,11 +2,11 @@
 
 //some colors: http://www.colourlovers.com/palette/1767756/Crescendoe
 
-float masterVol = 0.75;
-bool useSerial = true;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+    
+    loadSettings();
     
     fillColor.set(167,29,27);
     lineColor.set(20,20,28);
@@ -171,7 +171,6 @@ void ofApp::restart(){
     //generate random frequenceies for the remaining waves
     for (int i=0; i<numWaves; i++){
         if (waves[i].frequency < 0){
-            cout<<"get rand for "<<i<<endl;
             //set a frequency that definitely has not been used
             bool newSound = false;
             while (newSound == false){
@@ -188,17 +187,15 @@ void ofApp::restart(){
         }
     }
     
-    
-    
-    for (int i=0; i<mysteryIDs.size(); i++){
-        cout<<"love to add "<<mysteryIDs[i]<<endl;
-    }
-    
-    cout<<"mys ";
-    for (int i=0; i<numWaves; i++){
-        cout<<mysteryActiveWaves[i];
-    }
-    cout<<endl;
+//    for (int i=0; i<mysteryIDs.size(); i++){
+//        cout<<"love to add "<<mysteryIDs[i]<<endl;
+//    }
+//
+//    cout<<"mys ";
+//    for (int i=0; i<numWaves; i++){
+//        cout<<mysteryActiveWaves[i];
+//    }
+//    cout<<endl;
     
     for (int i=0; i<2; i++){
         displayWaves[i].reset();
@@ -424,7 +421,7 @@ void ofApp::audioOut(float * output, int bufferSize, int nChannels){
             sample *= ofMap(winEffectTimer, 0.0f, 8.0f, 1.0f, 1.5f);
         }
         
-        sample *= masterVol;
+        sample *= masterVolume;
         
         //float sample = ofRandom(0.25);
         output[k*nChannels] = sample ;
@@ -526,7 +523,7 @@ void ofApp::keyPressed(int key){
     //numbers to debug turn on or off sounds
     if (gameState == STATE_GAME){
         for (int i=0; i<numWaves; i++){
-            if (key == (int)('1')+i){
+            if (key == inputKeys[i]){
                 playerActiveWaves[i] = true;
             }
         }
@@ -538,7 +535,7 @@ void ofApp::keyReleased(int key){
     if (gameState == STATE_GAME){
         //numbers to debug turn on or off sounds
         for (int i=0; i<numWaves; i++){
-            if (key == (int)('1')+i){
+            if (key == inputKeys[i]){
                 playerActiveWaves[i] = false;
             }
         }
@@ -615,4 +612,50 @@ void ofApp::endWinSequence(){
 //formula from https://pages.mtu.edu/~suits/NoteFreqCalcs.html
 float ofApp::getFreq(int halfStepsFrom440){
     return 440 * powf(1.059463094359, (float)halfStepsFrom440);
+}
+
+//--------------------------------------------------------------
+void ofApp::loadSettings(){
+    ofBuffer buffer = ofBufferFromFile("settings.txt");
+    
+    int curLineNum = 0;
+    if(buffer.size()) {
+        
+        for (ofBuffer::Line it = buffer.getLines().begin(), end = buffer.getLines().end(); it != end; ++it) {
+            
+            string line = *it;
+            
+            if (line.size() > 0){
+                if (line[0] != ';'){
+                    cout << line << endl;
+                    if (curLineNum == 0){
+                        useSerial = line.find("TRUE") == 0;
+                    }
+                    if (curLineNum > 0 && curLineNum <= 6){
+                        inputKeys[curLineNum-1] = line[0];
+                    }
+                    if (curLineNum == 7){
+                        masterVolume = ofToFloat(line);
+                    }
+                    if (curLineNum == 8){
+                        if(line.find("TRUE") == 0){
+                            ofToggleFullscreen();
+                        }
+                    }
+                    
+                    curLineNum++;
+                    
+                }
+            }
+        }
+    }
+    else{
+        cout<<"no settings file found. Using defauls"<<endl;
+        useSerial = false;
+        for (int i=0; i<numWaves; i++){
+            inputKeys[i] = ('1')+i;
+        }
+        masterVolume = 1.0;
+        ofToggleFullscreen();
+    }
 }

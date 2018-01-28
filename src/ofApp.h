@@ -33,6 +33,10 @@ public:
     
     float getFreq(int halfStepsFrom440);
     
+    void loadSettings();
+    
+    float masterVolume;
+    
     int bufferSize;
     int sampleRate;
     ofSoundStream soundStream;
@@ -43,6 +47,8 @@ public:
     int numWaves;
     vector<Wave> waves;
     vector<bool> playerActiveWaves, mysteryActiveWaves;
+    
+    char inputKeys[6];
     
 #define PLAYER_ID 0
 #define MYSTERY_ID 1
@@ -71,6 +77,7 @@ public:
     ofColor extraColor;
     
     //serial comunication with controller
+    bool useSerial;
     //much of this taken from the oF serial exmaple
     char        bytesRead[3];                  // data from serial, we will be trying to read 3
     char        bytesReadString[4];            // a string needs a null terminator, so we need 3 + 1 bytes
