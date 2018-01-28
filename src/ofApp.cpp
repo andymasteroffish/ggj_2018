@@ -66,6 +66,8 @@ void ofApp::setup(){
         nBytesRead = 0;
         memset(bytesReadString, 0, 4);
     }
+    
+    
 }
 
 //--------------------------------------------------------------
@@ -85,29 +87,39 @@ void ofApp::setScreenSize(){
     //int centerPos = (numWaves-1)/2;
     for (int i=0; i<numWaves; i++){
         //int order = i;
-        int order = 2;
-        if (i==1 || i == 4){
-            order = 1;
-        }
-        if (i==2 || i == 3){
-            order = 0;
-        }
+//        int order = 2;
+//        if (i==1 || i == 4){
+//            order = 1;
+//        }
+//        if (i==2 || i == 3){
+//            order = 0;
+//        }
         
         float thisScale = ((float)ofGetWidth()-200) / (waves[i].displayWidth*(float)numWaves);
         thisScale *= 0.85;
         
         float xPadding = 200 * thisScale ;
         int x = ofMap(i, 0, numWaves-1, xPadding, ofGetWidth()-xPadding);
+        
         float topY = ofGetHeight() * 0.75;
-        float botY = (ofGetHeight() - (waves[i].displayHeight * thisScale)) * 0.95;
+        float botY = (ofGetHeight() - (waves[i].displayHeight * thisScale)) * 0.98;
+//        float topY = ofGetHeight() * 0.75;
+//        float botY = (ofGetHeight() - (waves[i].displayHeight * thisScale)) * 0.95;
         //int y = ofMap( abs(order) , 0, centerPos, topY, botY);
-        int y = ofMap( abs(order) , 0, 2, topY, botY);
+        //int y = ofMap( abs(order) , 0, 2, topY, botY);
+        float yPrc = (float)i/(float)(numWaves-1);
+        yPrc = powf(yPrc, 1.75);
+        float y = (1.0f-yPrc)*botY + yPrc*topY;
         
         waves[i].setPos(x,y);
         waves[i].displayScale = thisScale;
     }
     
-    
+    if (ofGetScreenWidth() == ofGetWidth()){
+        ofHideCursor();
+    }else{
+        ofShowCursor();
+    }
 }
 
 //--------------------------------------------------------------
@@ -338,6 +350,13 @@ void ofApp::updateSerial(){
                 }
                 if (thisChar == releaseVals[k]){
                     playerActiveWaves[k] = false;
+                }
+            }
+            
+            int numPanButtons = 5;
+            for (int k = 0; k<numPanButtons; k++){
+                if (thisChar == touchVals[numWaves+k]){
+                    targetPan = (float)k/(float)numPanButtons;
                 }
             }
         }

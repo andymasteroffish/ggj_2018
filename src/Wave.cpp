@@ -81,7 +81,7 @@ void Wave::draw(ofColor baseCol, ofColor extraCol, bool drawActive){
     
     //main rect
     ofColor thisCol = baseCol;
-    thisCol.a = drawActive ? 255 : 100;
+    thisCol.a = drawActive ? 255 : 160;
     ofSetColor(thisCol);
     ofNoFill();
     ofDrawRectangle(-displayWidth/2,-displayHeight/2, displayWidth, displayHeight);
