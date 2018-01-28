@@ -8,10 +8,6 @@ void ofApp::setup(){
     
     loadSettings();
     
-//    fillColor.set(167,29,27);
-//    lineColor.set(20,20,28);
-//    extraColor.set(247,232,201);
-    
     ofEnableSmoothing();
     ofEnableAlphaBlending();
     
@@ -617,7 +613,10 @@ float ofApp::getFreq(int halfStepsFrom440){
 
 //--------------------------------------------------------------
 void ofApp::loadSettings(){
-    ofBuffer buffer = ofBufferFromFile("settings.txt");
+    string filePath = ofFilePath::getCurrentExeDir()+"../../../settings.txt";
+    //cout<<filePath<<endl;
+    
+    ofBuffer buffer = ofBufferFromFile(filePath);
     
     int curLineNum = 0;
     if(buffer.size()) {
@@ -628,7 +627,7 @@ void ofApp::loadSettings(){
             
             if (line.size() > 0){
                 if (line[0] != ';'){
-                    cout << line << endl;
+                    //cout << line << endl;
                     if (curLineNum == 0){
                         useSerial = line.find("TRUE") == 0;
                     }
@@ -666,6 +665,12 @@ void ofApp::loadSettings(){
             inputKeys[i] = ('1')+i;
         }
         masterVolume = 1.0;
+        
+        fillColor.set(167,29,27);
+        lineColor.set(20,20,28);
+        extraColor.set(247,232,201);
+
+        
         ofToggleFullscreen();
     }
 }

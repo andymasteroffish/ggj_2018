@@ -1,0 +1,26 @@
+Triple Tone Curious Creature
+By Andy Wallace
+andymakes.com
+@andy_makes
+
+A new life form is contacting us from deep in space.
+It sings to us and desperately wants us to answer with the same song.
+
+
+--------------
+
+Designed for use with a custom controller, this game can also be played with a mouse and keyboard.
+Keys 1-6 to add a wave, mouse to pan.
+Match your wave to the creature's.
+Settings are configurable in settings.txt 
+F to toggle fullscreen
+
+
+--------------
+
+Created for Global Game Jam 2018 at LIU Post
+
+Crescendoe color scheme by leanneeb
+colourlovers.com/palette/1767756/Crescendoe
+
+Special thank to Jane Friedhoff for the concept.
