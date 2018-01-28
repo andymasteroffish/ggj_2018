@@ -116,7 +116,7 @@ void CombinedWave::draw(float myPan){
     float ovalH = waveDisplayHeight*2.5 * 0.51;
     
     float angleStep = TWO_PI/(float)numDots;
-    ofSetColor(extraColor);
+    ofSetColor(extraColor.r, extraColor.g, extraColor.b, 150);
     ofSetLineWidth(2);
     float panAdjust = ofMap(myPan, 0, 1, 0.5, 1.5);
     for (int i=0; i<numDots; i++){

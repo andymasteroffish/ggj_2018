@@ -8,9 +8,9 @@ void ofApp::setup(){
     
     loadSettings();
     
-    fillColor.set(167,29,27);
-    lineColor.set(20,20,28);
-    extraColor.set(247,232,201, 150);
+//    fillColor.set(167,29,27);
+//    lineColor.set(20,20,28);
+//    extraColor.set(247,232,201);
     
     ofEnableSmoothing();
     ofEnableAlphaBlending();
@@ -488,7 +488,8 @@ void ofApp::draw(){
     credCol.a = ofMap(ofGetElapsedTimef(), 20, 30, 255, 0, true);
     ofSetColor(credCol);
     string creditsText = "";
-    creditsText += "Game by Andy Wallace, @andy_makes, for GGJ 2018\n";
+    creditsText += "Triple Tone Curious Creature\n";
+    creditsText += "by Andy Wallace, @andy_makes, for GGJ 2018\n";
     creditsText += "Created in openFrameworks\n";
     creditsText += "Color scheme: Crescendoe by leanneeb\ncolourlovers.com/palette/1767756/Crescendoe\n";
     creditsText += "Special thanks to Jane Friedhoff\n";
@@ -642,6 +643,15 @@ void ofApp::loadSettings(){
                             ofToggleFullscreen();
                         }
                     }
+                    if (curLineNum == 9){
+                        fillColor = colFromString(line);
+                    }
+                    if (curLineNum == 10){
+                        lineColor = colFromString(line);
+                    }
+                    if (curLineNum == 11){
+                        extraColor = colFromString(line);
+                    }
                     
                     curLineNum++;
                     
@@ -658,4 +668,37 @@ void ofApp::loadSettings(){
         masterVolume = 1.0;
         ofToggleFullscreen();
     }
+}
+
+//--------------------------------------------------------------
+ofColor ofApp::colFromString(string input){
+    int vals[3];
+    for (int i=0; i<3; i++){
+        vals[i] = 255;
+    }
+    
+    int curVal = 0;
+    string curString = "";
+    
+    for (int i=0; i<input.size(); i++){
+        if (input[i] == ',' && curVal < 3){
+            vals[curVal] = ofToInt(curString);
+            curVal++;
+            curString = "";
+        }else{
+            curString += input[i];
+        }
+    }
+    if (curVal < 3){
+        vals[curVal] = ofToInt(curString);
+    }
+    
+    cout<<input <<" has become"<<endl;
+    for (int i=0; i<3; i++){
+        cout<<i<<":"<<vals[i]<<endl;
+    }
+    
+    ofColor returnVal;
+    returnVal.set(vals[0], vals[1], vals[2]);
+    return returnVal;
 }

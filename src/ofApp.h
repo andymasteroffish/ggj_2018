@@ -34,6 +34,7 @@ public:
     float getFreq(int halfStepsFrom440);
     
     void loadSettings();
+    ofColor colFromString(string input);
     
     float masterVolume;
     
