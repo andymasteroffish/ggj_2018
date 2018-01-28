@@ -3,6 +3,7 @@
 //some colors: http://www.colourlovers.com/palette/1767756/Crescendoe
 
 float masterVol = 0.75;
+bool useSerial = true;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -55,6 +56,16 @@ void ofApp::setup(){
     
     setScreenSize();
     
+    //setup serial
+    if (useSerial){
+        serial.listDevices();
+        vector <ofSerialDeviceInfo> deviceList = serial.getDeviceList();
+        int baud = 9600;
+        serial.setup(1, baud); //open the first device
+        nTimesRead = 0;
+        nBytesRead = 0;
+        memset(bytesReadString, 0, 4);
+    }
 }
 
 //--------------------------------------------------------------
@@ -188,6 +199,11 @@ void ofApp::restart(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    
+    if (useSerial){
+        updateSerial();
+    }
+    
     //cout<<sourceWaves[0].frequency<<endl;
    
     if (gameState == STATE_GAME){
@@ -259,6 +275,80 @@ void ofApp::update(){
     }
 }
 
+//--------------------------------------------------------------
+void ofApp::updateSerial(){
+    nTimesRead = 0;
+    nBytesRead = 0;
+    int nRead  = 0;  // a temp variable to keep count per read
+    
+    unsigned char bytesReturned[3];
+    
+    memset(bytesReadString, 0, 4);
+    memset(bytesReturned, 0, 3);
+    
+    while( (nRead = serial.readBytes( bytesReturned, 3)) > 0){
+        nTimesRead++;
+        nBytesRead = nRead;
+    };
+    
+    memcpy(bytesReadString, bytesReturned, 3);
+    
+    if (nBytesRead > 0){
+        //cout<<"read:"<<bytesReadString<<endl;
+        readString += bytesReadString;
+    }
+    
+    
+    char touchVals[NUM_TOUCH_BUTTONS];
+    touchVals[0] = '0';
+    touchVals[1] = '1';
+    touchVals[2] = '2';
+    touchVals[3] = '3';
+    touchVals[4] = '4';
+    touchVals[5] = '5';
+    touchVals[6] = '6';
+    touchVals[7] = '7';
+    touchVals[8] = '8';
+    touchVals[9] = '9';
+    touchVals[10] = 'a';
+    touchVals[11] = 'b';
+    
+    char releaseVals[NUM_TOUCH_BUTTONS];
+    releaseVals[0] = 'q';
+    releaseVals[1] = 'w';
+    releaseVals[2] = 'e';
+    releaseVals[3] = 'r';
+    releaseVals[4] = 't';
+    releaseVals[5] = 'y';
+    releaseVals[6] = 'u';
+    releaseVals[7] = 'i';
+    releaseVals[8] = 'o';
+    releaseVals[9] = 'p';
+    releaseVals[10] = 'k';
+    releaseVals[11] = 'l';
+    
+    for (int i=0; i<readString.length(); i++){
+        char thisChar = readString[i];
+        
+        if (gameState == STATE_GAME){
+        
+            for (int k = 0; k<numWaves; k++){
+                if (thisChar == touchVals[k]){
+                    playerActiveWaves[k] = true;
+                }
+                if (thisChar == releaseVals[k]){
+                    playerActiveWaves[k] = false;
+                }
+            }
+        }
+        
+        if (thisChar == 'x'){
+            cout<<"BAD BAD BAD"<<endl;
+        }
+        
+    }
+    readString = "";
+}
 //--------------------------------------------------------------
 void ofApp::audioOut(float * output, int bufferSize, int nChannels){
     

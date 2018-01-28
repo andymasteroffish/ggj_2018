@@ -11,6 +11,7 @@ public:
     void setScreenSize();
     void restart();
     void update();
+    void updateSerial();
     void draw();
 
     void keyPressed(int key);
@@ -69,5 +70,13 @@ public:
     ofColor lineColor;
     ofColor extraColor;
     
-		
+    //serial comunication with controller
+    //much of this taken from the oF serial exmaple
+    char        bytesRead[3];                  // data from serial, we will be trying to read 3
+    char        bytesReadString[4];            // a string needs a null terminator, so we need 3 + 1 bytes
+    int         nBytesRead;                    // how much did we read?
+    int         nTimesRead;                    // how many times did we read?
+    ofSerial    serial;
+    string readString;
+    #define NUM_TOUCH_BUTTONS 12
 };
