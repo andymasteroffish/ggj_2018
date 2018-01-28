@@ -35,6 +35,7 @@ public:
     
     ofColor fillColor;
     ofColor lineColor;
+    ofColor extraColor;
     
     float randVal;
     

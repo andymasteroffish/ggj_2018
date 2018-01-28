@@ -23,7 +23,7 @@ void ofApp::setup(){
     sampleRate = 44100;
     soundStream.setup(this, 2, 0, sampleRate, bufferSize, 4);
     
-    numWaves = 7;
+    numWaves = 6;
     playerActiveWaves.assign(numWaves, false);
     mysteryActiveWaves.assign(numWaves, false);
     
@@ -40,10 +40,14 @@ void ofApp::setup(){
         
         displayWaves[i].fillColor = fillColor;
         displayWaves[i].lineColor = lineColor;
+        displayWaves[i].extraColor = extraColor;
     }
     
     winTime = 0.5;
     winTimer = 0;
+    
+    targetPan = 0.5;
+    pan = targetPan;
     
     restart();
     
@@ -67,17 +71,26 @@ void ofApp::setScreenSize(){
     }
     
     //wave buttons
-    int centerPos = (numWaves-1)/2;
+    //int centerPos = (numWaves-1)/2;
     for (int i=0; i<numWaves; i++){
-        int order = i- centerPos;
+        //int order = i;
+        int order = 2;
+        if (i==1 || i == 4){
+            order = 1;
+        }
+        if (i==2 || i == 3){
+            order = 0;
+        }
         
         float thisScale = ((float)ofGetWidth()-200) / (waves[i].displayWidth*(float)numWaves);
+        thisScale *= 0.85;
         
-        float xPadding = 100 * thisScale ;
+        float xPadding = 200 * thisScale ;
         int x = ofMap(i, 0, numWaves-1, xPadding, ofGetWidth()-xPadding);
-        float topY = ofGetHeight() * 0.7;
-        float botY = (ofGetHeight() - (waves[i].displayHeight * thisScale)) * 0.96;
-        int y = ofMap( abs(order) , 0, centerPos, topY, botY);
+        float topY = ofGetHeight() * 0.75;
+        float botY = (ofGetHeight() - (waves[i].displayHeight * thisScale)) * 0.95;
+        //int y = ofMap( abs(order) , 0, centerPos, topY, botY);
+        int y = ofMap( abs(order) , 0, 2, topY, botY);
         
         waves[i].setPos(x,y);
         waves[i].displayScale = thisScale;
@@ -187,7 +200,6 @@ void ofApp::update(){
         }
         if (winner){
             winTimer += ofGetLastFrameTime();
-            cout<<"win timer "<<winTimer<<endl;
             if (winTimer >= winTime){
                 startWinSequence();
             }
@@ -210,7 +222,6 @@ void ofApp::update(){
             for (int i=0; i<2; i++){
                 displayWaves[i].winScaleAdjust = 1.0f + winPhaseVolPrc * ofMap(phaseTimer, 0,4, 0,0.5f, true);
             }
-            cout<<"phase prc "<<winPhaseVolPrc<<endl;
         }
         
         if (winEffectTimer > 8){
@@ -348,7 +359,7 @@ void ofApp::draw(){
     
     //wave buttons
     for (int i=0; i<waves.size(); i++){
-        waves[i].draw(fillColor, playerActiveWaves[i]);
+        waves[i].draw(fillColor, extraColor, playerActiveWaves[i]);
     }
     
     //the combined waves
@@ -365,9 +376,17 @@ void ofApp::draw(){
     //ofPopMatrix();
     
     
-    //debug shit
-    ofSetColor(fillColor);
-    //ofDrawBitmapString("fps: "+ofToString(ofGetFrameRate()), 5, 20);
+    //credits
+    
+    ofColor credCol = extraColor;
+    credCol.a = ofMap(ofGetElapsedTimef(), 20, 30, 255, 0, true);
+    ofSetColor(credCol);
+    string creditsText = "";
+    creditsText += "Game by Andy Wallace, @andy_makes, for GGJ 2018\n";
+    creditsText += "Created in openFrameworks\n";
+    creditsText += "Color scheme: Crescendoe by leanneeb\ncolourlovers.com/palette/1767756/Crescendoe\n";
+    creditsText += "Special thanks to Jane Friedhoff\n";
+    ofDrawBitmapString(creditsText, 5, 15);
 }
 
 //--------------------------------------------------------------
@@ -389,6 +408,10 @@ void ofApp::keyPressed(int key){
             cout<<playerActiveWaves[i];
         }
         cout<<endl;
+    }
+    
+    if (key == 'f'){
+        ofToggleFullscreen();
     }
     
     //numbers to debug turn on or off sounds

@@ -70,7 +70,7 @@ void Wave::update(bool gameEnd){
     }
 }
 
-void Wave::draw(ofColor baseCol, bool drawActive){
+void Wave::draw(ofColor baseCol, ofColor extraCol, bool drawActive){
     
     ofSetLineWidth(3);
     
@@ -79,18 +79,51 @@ void Wave::draw(ofColor baseCol, bool drawActive){
     
     ofScale(displayScale, displayScale);
     
+    //main rect
     ofColor thisCol = baseCol;
     thisCol.a = drawActive ? 255 : 100;
     ofSetColor(thisCol);
     ofNoFill();
-    
     ofDrawRectangle(-displayWidth/2,-displayHeight/2, displayWidth, displayHeight);
     
+    //the wave
     ofBeginShape();
     for (int i=0; i<displayWidth; i++){
-        ofVertex(i - displayWidth/2, audio[i]*displayHeight*0.5);
+        ofVertex(i - displayWidth/2, audio[i]*displayHeight*0.4);
     }
     ofEndShape();
+    
+    //corners
+    ofColor altCol = extraCol;
+    altCol.a = drawActive ? 200 : 60;
+    ofSetColor(altCol);
+    ofSetLineWidth(2);
+    float cornerSpacing = 5;
+    float cornerLengthA = 10;
+    float cornerLengthB = 10;
+    if (drawActive){
+        cornerLengthA += sin(ofGetElapsedTimef() * frequency * 0.03) * 3;
+        cornerLengthB += sin(PI + ofGetElapsedTimef() * frequency * 0.03) * 3;
+    }
+    
+    ofVec2f topLeft(-displayWidth/2-cornerSpacing,-displayHeight/2-cornerSpacing);
+    ofVec2f botRight(displayWidth/2+cornerSpacing, displayHeight/2+cornerSpacing);
+    
+    //top left
+    ofDrawLine(topLeft.x, topLeft.y, topLeft.x+cornerLengthA, topLeft.y);
+    ofDrawLine(topLeft.x, topLeft.y, topLeft.x, topLeft.y+cornerLengthB);
+    
+    //top right
+    ofDrawLine(botRight.x, topLeft.y, botRight.x-cornerLengthB, topLeft.y);
+    ofDrawLine(botRight.x, topLeft.y, botRight.x, topLeft.y+cornerLengthA);
+    
+    //bottom left
+    ofDrawLine(topLeft.x, botRight.y, topLeft.x+cornerLengthB, botRight.y);
+    ofDrawLine(topLeft.x, botRight.y, topLeft.x, botRight.y-cornerLengthA);
+    
+    //bottom right
+    ofDrawLine(botRight.x, botRight.y, botRight.x-cornerLengthA, botRight.y);
+    ofDrawLine(botRight.x, botRight.y, botRight.x, botRight.y-cornerLengthB);
     
     ofPopMatrix();
 }

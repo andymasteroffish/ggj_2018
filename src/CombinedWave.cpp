@@ -110,6 +110,27 @@ void CombinedWave::draw(float myPan){
     }
     ofEndShape();
     
+    //some wigglers around the edge
+    int numDots = 7;
+    float ovalW = audio.size() * 0.51;
+    float ovalH = waveDisplayHeight*2.5 * 0.51;
+    
+    float angleStep = TWO_PI/(float)numDots;
+    ofSetColor(extraColor);
+    ofSetLineWidth(2);
+    float panAdjust = ofMap(myPan, 0, 1, 0.5, 1.5);
+    for (int i=0; i<numDots; i++){
+        float thisAngle = angleStep*i + ofGetElapsedTimef() * 0.75 * panAdjust;
+        float thisAngle2 = thisAngle+0.1;
+        float dotX1 = cos(thisAngle) * ovalW ;
+        float dotY1 = sin(thisAngle) * ovalH ;
+        float dotX2 = cos(thisAngle2) * ovalW ;
+        float dotY2 = sin(thisAngle2) * ovalH ;
+        //ofDrawCircle(dotX, dotY, 2);
+        ofDrawLine(dotX1, dotY1, dotX2, dotY2);
+    }
+    
+    
     ofPopMatrix();
 }
 

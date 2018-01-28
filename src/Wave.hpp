@@ -19,7 +19,7 @@ public:
     void advanceAudio();
     
     void update(bool gameEnd);
-    void draw(ofColor baseCol, bool drawActive);
+    void draw(ofColor baseCol, ofColor extraCol, bool drawActive);
     
     bool mousePressed(int x, int y);
     
