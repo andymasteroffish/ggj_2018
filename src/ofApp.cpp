@@ -121,7 +121,17 @@ void ofApp::setScreenSize(){
 //--------------------------------------------------------------
 void ofApp::restart(){
     
+    float roll = ofRandomuf();
     int numToAdd = 3;
+    if (roll < 0.1){
+        numToAdd = 2;
+    }
+    if (roll > 0.85){
+        numToAdd = 4;
+    }
+    //cout<<"adding "<<numToAdd<<endl;
+    
+    
     vector<int> mysteryIDs;
     
     int lowStepsDist = -25;
@@ -156,13 +166,14 @@ void ofApp::restart(){
     
     //set them up as a chord
     int cordStart = ofRandom(-25, 10);
-    //THIS REQUIRES 3 TO BE ON RIGHT NOW
     waves[ mysteryIDs[0] ].setFrequency( getFreq(cordStart-12) );
     waves[ mysteryIDs[1] ].setFrequency( getFreq(cordStart+12+3) );
-    waves[ mysteryIDs[2] ].setFrequency( getFreq(cordStart+7) );
-//    waves[ mysteryIDs[0] ].setFrequency( getFreq(cordStart) );
-//    waves[ mysteryIDs[1] ].setFrequency( getFreq(cordStart+4-12) );
-//    waves[ mysteryIDs[2] ].setFrequency( getFreq(cordStart+7) );
+    if (numToAdd >= 3){
+        waves[ mysteryIDs[2] ].setFrequency( getFreq(cordStart+7) );
+    }
+    if (numToAdd >= 4){
+        waves[ mysteryIDs[3] ].setFrequency( getFreq(cordStart) );
+    }
     
     //generate random frequenceies for the remaining waves
     for (int i=0; i<numWaves; i++){
@@ -588,7 +599,6 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 //--------------------------------------------------------------
 void ofApp::startWinSequence(){
-    cout<<"START WIN"<<endl;
     gameState = STATE_WIN;
     winEffectTimer = 0;
     
