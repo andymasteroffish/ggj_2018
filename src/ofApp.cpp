@@ -6,12 +6,11 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
     
-    loadSettings();
+    numWaves = 6;
     
     ofEnableSmoothing();
     ofEnableAlphaBlending();
     
-    ofBackground(lineColor);
     
     ofSetFrameRate(60);
     ofSetVerticalSync(true);
@@ -20,7 +19,7 @@ void ofApp::setup(){
     sampleRate = 44100;
     soundStream.setup(this, 2, 0, sampleRate, bufferSize, 4);
     
-    numWaves = 6;
+    
     playerActiveWaves.assign(numWaves, false);
     mysteryActiveWaves.assign(numWaves, false);
     
@@ -30,11 +29,14 @@ void ofApp::setup(){
         wave.setup(440, sampleRate);
         waves.push_back(wave);
     }
-    
     //and the combined waves
     for (int i=0; i<2; i++){
         displayWaves[i].setup(bufferSize);
-        
+    }
+    
+    loadSettings();
+    
+    for (int i=0; i<2; i++){
         displayWaves[i].fillColor = fillColor;
         displayWaves[i].lineColor = lineColor;
         displayWaves[i].extraColor = extraColor;
@@ -51,6 +53,9 @@ void ofApp::setup(){
     nextAudioPos = 0;
     
     setScreenSize();
+    
+    
+    ofBackground(lineColor);
     
     //setup serial
     if (useSerial){
@@ -126,9 +131,9 @@ void ofApp::restart(){
     if (roll < 0.1){
         numToAdd = 2;
     }
-    if (roll > 0.85){
-        numToAdd = 4;
-    }
+//    if (roll > 0.85){
+//        numToAdd = 4;
+//    }
     //cout<<"adding "<<numToAdd<<endl;
     
     
@@ -624,6 +629,7 @@ float ofApp::getFreq(int halfStepsFrom440){
 //--------------------------------------------------------------
 void ofApp::loadSettings(){
     string filePath = ofFilePath::getCurrentExeDir()+"../../../settings.txt";
+    //string filePath = "settings.txt";
     //cout<<filePath<<endl;
     
     ofBuffer buffer = ofBufferFromFile(filePath);
@@ -673,6 +679,7 @@ void ofApp::loadSettings(){
         useSerial = false;
         for (int i=0; i<numWaves; i++){
             inputKeys[i] = ('1')+i;
+            //cout<<i<<":"<<inputKeys[i]<<endl;
         }
         masterVolume = 1.0;
         
@@ -708,10 +715,10 @@ ofColor ofApp::colFromString(string input){
         vals[curVal] = ofToInt(curString);
     }
     
-    cout<<input <<" has become"<<endl;
-    for (int i=0; i<3; i++){
-        cout<<i<<":"<<vals[i]<<endl;
-    }
+//    cout<<input <<" has become"<<endl;
+//    for (int i=0; i<3; i++){
+//        cout<<i<<":"<<vals[i]<<endl;
+//    }
     
     ofColor returnVal;
     returnVal.set(vals[0], vals[1], vals[2]);

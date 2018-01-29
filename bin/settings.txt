@@ -5,7 +5,7 @@
 ;What each setting does is described right above
 
 ;Use custom controller - must be TRUE or FALSE
-TRUE
+FALSE
 
 ;Keys to control tones (must be exactly 6)
 1
@@ -19,7 +19,7 @@ TRUE
 0.95
 
 ;Fullscreen
-FALSE
+TRUE
 
 ;color A
 167,29,27

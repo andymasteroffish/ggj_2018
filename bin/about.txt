@@ -3,17 +3,25 @@ By Andy Wallace
 andymakes.com
 @andy_makes
 
-A new life form is contacting us from deep in space.
+A mysterious lifeform is contacting us from deep in space.
 It sings to us and desperately wants us to answer with the same song.
 
 
 --------------
 
-Designed for use with a custom controller, this game can also be played with a mouse and keyboard.
-Keys 1-6 to add a wave, mouse to pan.
+If you get a message that says "'curious_creature' can’t be opened because it is from an unidentified developer." Just right click the app, select open, and then select "open" on the following prompt. You should only have to do this once.
+
+
+--------------
+
+Although this was designed for use with a custom controller, this game can also be played with a mouse and keyboard.
+
 Match your wave to the creature's.
-Settings are configurable in settings.txt 
+
+Keys 1-6 to add a wave, mouse to pan
+Settings are configurable in settings.txt
 F to toggle fullscreen
+R to skip puzzle
 
 
 --------------
